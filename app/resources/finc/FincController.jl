@@ -39,6 +39,7 @@ function get_finance()
   sample_title_arr = get_title()
   dfs = get_stats(test_symbols)
   # stocks_html_arr = [repr(MIME("text/html"), df) for df in dfs ]
+  debug_msg = "df keys: $(dfs.keys) shapes = $(dfs)"
   html(:finc, :stock_simple_info, data_dict=dfs )
 end
 

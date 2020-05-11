@@ -13,7 +13,7 @@ V) create a basic static version of the graph on web browser
 8) add a buyin marker to my stocks (when did i bought the stocks)
 
 #FIXME
-1) there is some bug with activating PyCall from inside Genie app
+V) there is some bug with activating PyCall from inside Genie app
 2) i think i had a problem appending several plots on top of each other (plot!)
 V) best way to reload the genie app? - seems not needed  (use Genie.loadapp() and then up())
 4) where is the best place to put utility modules for easy debug and when loading the app

@@ -1,5 +1,6 @@
 <!-- dataframe.jl.html -->
 <h1>showing the dataframe in table wise manner</h1>
-<h3> This is the name of the symbol <% df_name %> </h3>
+<h3> This is the name of the symbol <% symbol_name %> </h3>
 <!-- <% Base.show(stdout, MIME"test/html"(), df) %> -->
-<% repr(MIME("text/html"), df) %>
+<!-- repr - works with plot or DataFrame -->
+<% repr(MIME("text/html"), data) %>

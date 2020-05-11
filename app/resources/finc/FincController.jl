@@ -9,7 +9,7 @@ using fin_stats
 using Plots
 using Dates
 
-# for sample_finance
+# To read the basic sample data from csv
 using CSV
 
 
@@ -34,14 +34,28 @@ function get_title()
   ]
 end
 
-function get_fincance()
+function get_finance()
   println("test 1: get finance")
   sample_title_arr = get_title()
   dfs = get_stats(test_symbols)
-  stocks_html_arr = [Base.show(stdout, MIME("text/html"), df) for df in dfs ]
-  #append!(sample_title_arr, stocks_html_arr)
+  # stocks_html_arr = [repr(MIME("text/html"), df) for df in dfs ]
+  html(:finc, :stock_simple_info, data_dict=dfs )
 end
 
+function get_data_from_py()
+  println("test 2: get_data_from_py")
+  sample_title_arr = get_title()
+  dfs = get_stats(test_symbols)
+  @info "got data for $test_symbols"
+  stocks_html_arr = [repr(MIME("text/html"), df) for (sym_name, df) in dfs ]# This shows the data in unformatted way
+  # append!(sample_title_arr, stocks_html_arr)
+end
+
+function test_pycall()
+  println("test 3: test pycall (tag)")
+  msg = fin_stats.version_ext()
+  html(msg)
+end
 
 # ==========================================================================
 # utility function to use with some static data saved as csv
@@ -50,8 +64,9 @@ end
 Read the csv
 """
 function get_sample_data()
-  CSV.read("../sample_fin_df.csv")
+  CSV.read("public/finc/sample_data_df.csv")
 end
+# TODO try and implement these two function with param
 """
 plot a graph to the browser using a static dataframe (csv format)
 this is used for test/debug in order to create the framework for the first time
@@ -63,7 +78,7 @@ function sample_finance()
   #html(df)   # found in Genie.Render.Html
   # html(Base.show(stdout, MIME"text/html"(), df) ) # spits out the df in html format
 
-  html(:finc, :dataframe, df_name="CSCO", df=df)
+  html(:finc, :dataframe, symbol_name="CSCO", data=df)
   # (resource_name, vies_name, argumerts)
   # https://genieframework.github.io/Genie.jl/guides/Working_With_Genie_Apps.html
 end
@@ -76,7 +91,7 @@ function sample_plot_finance()
   plotly()
   my_dates = [DateTime(d) for d in df[!, :Date]]
   my_plot = plot(my_dates ,df[!, :Close])  # try fmt = :html
-  html(:finc, :dataframe, df_name="CSCO", df=my_plot)
+  html(:finc, :dataframe, symbol_name="CSCO", data=my_plot)
 end
 
 end # module FincController

@@ -1,0 +1,15 @@
+<!-- stocks_simple_info.jl.html -->
+<h1>Stocks simple view - all dict stocks</h1>
+
+<% @foreach(data_dict) do (sym, df) %>
+    <h3> Data of stock symbol $(sym) </h3>
+    <!--
+    <div class="df_table">
+        $(repr(MIME()"text/html"), df))
+    </div>
+    -->
+    <% repr(MIME("text/html"), df) %>
+<% end %>
+
+<!-- <% Base.show(stdout, MIME"test/html"(), df) %> -->
+<!-- repr - works with plot or DataFrame -->

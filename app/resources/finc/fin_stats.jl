@@ -2,17 +2,38 @@ module fin_stats
 
 using PyCall, DataFrames, Plots
 using Dates
-yf = pyimport("yfinance")
 
 export get_stats
 export test_symbols
+export version_ext
 
 
 test_symbols = ["MSFT", "CSCO"]  # used for debuggin purpose
+
+"""
+Shows info about the version of python working with PyCall
+"""
+function version_ext()
+  global yf
+  yf_temp = pyimport("yfinance")
+  v_str = PyCall.python
+  lib_str = PyCall.libpython
+
+  yf_str = string(yf_temp)
+  yf_str = replace(yf_str, "<" => "&lt")
+  yf_str = replace(yf_str, ">" => "&gt")
+
+  msg = "python path: $v_str lib path : $lib_str      yf (temp local var): $yf_str"
+  @info msg
+  return msg
+end
+
 """
 gets the stats of single stock by String of the stock symbol
+Returns a DataFrame of all stats
 """
 function get_stats(sym::String)::DataFrame
+  yf = pyimport("yfinance")
   tickerData = yf.Ticker(sym)
   hist = tickerData.history()
 
@@ -28,6 +49,10 @@ function get_stats(sym::String)::DataFrame
   df
 end
 
+"""
+gets stats of multiple stocks by list of stock symbols
+Returns a dict {"sym" -> DataFrame}
+"""
 function get_stats(sym::Array)
   @info "get stats called for $sym array"
   dfs = Dict()
@@ -41,14 +66,17 @@ end
 
 """
 Plot the stock closing price
-UNDER CONSTRUCTION
 """
 function plot_stock(df)
-  plot(df[!, :Date] ,df[!, :Close])
-  #using Dates
-  #my_dates = [DateTime(d) for d in df[!, :Date]]
+  my_dates = [DateTime(d) for d in df[!, :Date]]
+  plot(my_dates ,df[!, :Close])
 end
 
+
+"""
+FIXME:
+Plots multiple stock graph on the same axis
+"""
 function stocks_info_and_plot(symbols::Array)
   # set to plotlyjs backend
   #plotlyjs()

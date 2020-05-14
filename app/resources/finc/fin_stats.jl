@@ -4,6 +4,7 @@ using PyCall, DataFrames, Plots
 using Dates
 
 export get_stats
+export plot_stocks
 export test_symbols
 export version_ext
 
@@ -31,21 +32,51 @@ end
 """
 gets the stats of single stock by String of the stock symbol
 Returns a DataFrame of all stats
+
+interval: valid vlues: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo
+          time periods to meassure the stock rate
+
+start: "YYY-MM-DD"  begin of period
+end: "YYY-MM-DD"  begin of period
+period: shortcut to describe the period that ends today
+        valied values 1d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max
 """
-function get_stats(sym::String)::DataFrame
+function get_stats(sym::String; interval::String="1d", period::String="1mo", start::Union{String,Nothing}=nothing)::DataFrame
   yf = pyimport("yfinance")
   tickerData = yf.Ticker(sym)
-  hist = tickerData.history()
+  if isnothing(start)
+    hist = tickerData.history(interval=interval, period=period)
+  else
+    hist = tickerData.history(interval=interval, start=start)  #Assuming todat for end of period
+  end
 
-  #@info "hist info = $(tickerData.info)"
   colnames = map(Symbol, hist.columns);
   rownames = map(string, hist.index)
 
   #df = DataFrame(Array[hist[c] for c in colnames[begin:end-1]], colnames[begin:end-1])
-  df = DataFrame(Array[get(hist, c) for c in colnames], colnames)
+  #df = DataFrame(Array[get(hist, c) for c in colnames if !(c in [Symbol("Stock Splits")] )], colnames)  # if c != "Stock Splits", "Volume"
+  df = DataFrame(Array[get(hist, c) for c in colnames], colnames)  # if c != "Stock Splits", "Volume"
   # NOTE: in the stackoverflow answer they use Any(Array....) - not sure why
-  # Add the rownames - Dates
-  df[!, :Date] = collect(rownames)
+
+  # Manipulate the Basic DataFrame object
+  # ======================================
+  df[!, :Date] = collect(rownames) # Add the rownames - Dates
+  # Clean all PyObject (numpy) to primitive julia
+  println("change dividens Type")
+  try
+    new_dividends = [d.tolist() for d in df[!, :Dividends]]
+    df[!, :Dividends] = new_dividends
+  catch
+    @debug "dividends are not in numpy format"
+    println("dividends in julia format")
+  end
+  println("change Volume type")
+  df[!, :Volume] = [d.tolist() for d in df[!, :Volume]]
+  println("removing 'stock splits'")
+  try
+    delete!(df, :Symbol("Stock Splits"))  # Remoce unknow column
+  catch
+  end
   df
 end
 
@@ -53,7 +84,7 @@ end
 gets stats of multiple stocks by list of stock symbols
 Returns a dict {"sym" -> DataFrame}
 """
-function get_stats(sym::Array)
+function get_stats(sym::Array; interval::String="1d", period::String="1mo", start::Union{String,Nothing}=nothing)
   @info "get stats called for $sym array"
   dfs = Dict()
   for s in sym
@@ -67,15 +98,29 @@ end
 """
 Plot the stock closing price
 """
-function plot_stock(df)
+function plot_stock(df; sym_name::Union{String, Nothing}=nothing)
   my_dates = [DateTime(d) for d in df[!, :Date]]
-  plot(my_dates ,df[!, :Close])
+  plot(my_dates ,df[!, :Close], label=sym_name)
 end
 
+"""
+Plots multiple plots in 1 Axis
+Returns the plot object
+"""
+function plot_stocks(dfs)
+  plotly()
+  pl = plot()
+  for (sym,df) in dfs
+    my_dates = [DateTime(d) for d in df[!, :Date]]
+    @info "plotting for $sym from $(df[begin, :Date]) to $(df[end, :Date])"
+    plot!(my_dates ,dfs[sym][!, :Close], label=sym)
+  end
+  plot!()  # Retuns the plots object
+end
 
 """
-FIXME:
-Plots multiple stock graph on the same axis
+Plots gets defualt mode data of stocks and plots multiple stock graph on the same axis
+Returns thd dictionaty of DataFrame
 """
 function stocks_info_and_plot(symbols::Array)
   # set to plotlyjs backend
@@ -83,12 +128,12 @@ function stocks_info_and_plot(symbols::Array)
   @info "Parsing stocks $symbols"
   plotly()
   dfs = get_stats(symbols)
-  display(plot())
+  pl = plot()  # used to be display(plot())
   for sym in symbols
     my_dates = [DateTime(d) for d in dfs[sym][!, :Date]]
     @debug "plotting for $sym from $(dfs[sym][begin, :Date]) to $(dfs[sym][end, :Date])"
     #display(plot!(dfs[sym][!, :Date] ,dfs[sym][!, :Close]))
-    display(plot!(my_dates ,dfs[sym][!, :Close]))
+    plot!(my_dates ,dfs[sym][!, :Close], label=sym)
   end
   return dfs
 end

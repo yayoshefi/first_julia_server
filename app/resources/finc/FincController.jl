@@ -1,6 +1,6 @@
 module FincController
 # Build something great
-using Genie.Renderer.Html
+using Genie.Renderer.Html,  Genie.Requests
 using DataFrames
 using fin_stats
 #include("../fin_stats.jl")
@@ -12,9 +12,7 @@ using Dates
 # To read the basic sample data from csv
 using CSV
 
-
 export get_fincance
-export get_title
 
 struct Stock
   name::String
@@ -22,36 +20,58 @@ struct Stock
   #df::DataFrames.DataFrame   #DataFrame containig all history data of open/close...
 end
 
-function get_title()
-  println("get title function")
-  [
-      Html.h1() do
-        "Under construction"
-      end
-      Html.h3() do
-        "building the backend..."
-      end
-  ]
+
+macro log_fmt(msg)
+  return "Module $(@__MODULE__): in $(@__FILE__)+$(@__LINE__):: $msg"
 end
 
+"""
+basic test function to get data out of test_symbols (defined in fin_stats Module)
+"""
 function get_finance()
-  println("test 1: get finance")
-  sample_title_arr = get_title()
+  @info @log_fmt "test 1: get finance"
   dfs = get_stats(test_symbols)
+  #=
+  plots_dict = Dict(sym => fin_stats.plot_stock(df) for (sym,df) in dfs)
+
   # stocks_html_arr = [repr(MIME("text/html"), df) for df in dfs ]
   debug_msg = "df keys: $(dfs.keys) shapes = $(dfs)"
-  html(:finc, :stock_simple_info, data_dict=dfs )
+  html(:finc, :stock_simple_info, data_dict=plots_dict )
+  =#
+  pl = plot_stocks(dfs)
+  html(:finc, :dataframe, symbol_name=join(test_symbols, " "), data=pl)
 end
 
-function get_data_from_py()
-  println("test 2: get_data_from_py")
-  sample_title_arr = get_title()
-  dfs = get_stats(test_symbols)
-  @info "got data for $test_symbols"
-  stocks_html_arr = [repr(MIME("text/html"), df) for (sym_name, df) in dfs ]# This shows the data in unformatted way
-  # append!(sample_title_arr, stocks_html_arr)
+"""
+collect new stock by symbol given from POST payload
+"""
+function show_single_stock()
+  sym = postpayload(:stock_sym, "CSCO")
+  println("showing stock prices for $sym;  payload= $(postpayload())")
+  #getpayload(:interval, "1d")
+  df = get_stats(sym)
+  pl = fin_stats.plot_stock(df)
+  @info "showing stock prices for $sym payload=$(postpayload())"
+  html(:finc, :dataframe, symbol_name=sym, data=pl)
+end
+"""
+Select some stock by name
+"""
+function choose_stock_form()
+  form = """
+  <form action="/test_new_stock" method="POST" enctype="multipart/form-data">
+    <input type="text" name="stock_sym" value="" placeholder="select stock symbol" />
+    <input type="submit" value="Continue" />
+  </form>
+  """
+  @info @log_fmt "servnig NO specifing version", payload=postpayload
+  html(form)
 end
 
+
+"""
+Returns some inner properties of the fin_stats module and it's PyCall usage
+"""
 function test_pycall()
   println("test 3: test pycall (tag)")
   msg = fin_stats.version_ext()

@@ -2,19 +2,20 @@ This should elaborate what more is need to be done
 
 # TODO
 1) choose the best backend (gr / plotly  / plotlyjs)
-2) fix x axis in plot to show proper dates - partialy using "my_dates"
+V) fix x axis in plot to show proper dates - partialy using "my_dates"
 V) create a basic static version of the graph on web browser
 
 
 4) load all data to DB (SQL)
-5) choose better dates rather than the default 1 month
-6) add some choosing opiton in the browser to select the interval of dates
+V) choose better dates rather than the default 1 month
+V) add some choosing opiton in the browser to select the interval of dates
 7) parse my excel to select the symbols
 8) add a buyin marker to my stocks (when did i bought the stocks)
 
 #FIXME
-V) there is some bug with activating PyCall from inside Genie app
+V) there is some bug with activating PyCall from inside Genie app:: fixed with local var - debug with yayo_module
 2) i think i had a problem appending several plots on top of each other (plot!)
 V) best way to reload the genie app? - seems not needed  (use Genie.loadapp() and then up())
 4) where is the best place to put utility modules for easy debug and when loading the app
    they should be easy to include seperatly and inside the resource (uder genie or not)
+   try Genie.startup()

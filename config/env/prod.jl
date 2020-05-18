@@ -9,3 +9,4 @@ const config = Settings(
 )
 
 ENV["JULIA_REVISE"] = "off"
+println("Production evnviorment config was created!")

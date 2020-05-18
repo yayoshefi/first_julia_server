@@ -21,15 +21,11 @@ struct Stock
 end
 
 
-macro log_fmt(msg)
-  return "Module $(@__MODULE__): in $(@__FILE__)+$(@__LINE__):: $msg"
-end
-
 """
 basic test function to get data out of test_symbols (defined in fin_stats Module)
 """
 function get_finance()
-  @info @log_fmt "test 1: get finance"
+  @info  "test 1: get finance"
   dfs = get_stats(test_symbols)
   #=
   plots_dict = Dict(sym => fin_stats.plot_stock(df) for (sym,df) in dfs)
@@ -42,31 +38,32 @@ function get_finance()
   html(:finc, :dataframe, symbol_name=join(test_symbols, " "), data=pl)
 end
 
-"""
-collect new stock by symbol given from POST payload
-"""
-function show_single_stock()
-  sym = postpayload(:stock_sym, "CSCO")
-  println("showing stock prices for $sym;  payload= $(postpayload())")
-  #getpayload(:interval, "1d")
-  df = get_stats(sym)
-  pl = fin_stats.plot_stock(df)
-  @info "showing stock prices for $sym payload=$(postpayload())"
-  html(:finc, :dataframe, symbol_name=sym, data=pl)
+function test_new_finance()
+  @debug "lodaing new finance view"
+  println("post params: \n", join(["$k : $v\n" for (k,v) in postpayload()]) )
+  # search properties
+  sym_list = split(postpayload(:state, ""), ",")
+  sym_list = sym_list == [""] ? [] : sym_list  # remove list in case the state is empty
+  interval_set = postpayload(:day, false)=="on" ? "1d" : postpayload(:week, false)=="on" ? "1wk" : "1mo"
+  new_sym_list = Array{String}(vcat(sym_list, postpayload(:new_stock, [])))
+  begin_date = postpayload(:start, nothing)
+  # FIXME - how to pass a dict through string form    {eval(Meta.parse(sting(dict)))}
+  state=Dict(:sym_list => new_sym_list, :interval => interval_set, :begin => begin_date)
+
+  @info "Properties set for get_stats: symbols=$(new_sym_list), interval=$(interval_set), Begin date=$(begin_date) $(typeof(begin_date))"
+
+  dfs_dict = get_stats(new_sym_list, interval=interval_set, start=begin_date)
+  pl=plot_stocks(dfs_dict)
+  html(:finc, :show_stocks, data_dict=dfs_dict, pl=pl)
 end
-"""
-Select some stock by name
-"""
-function choose_stock_form()
-  form = """
-  <form action="/test_new_stock" method="POST" enctype="multipart/form-data">
-    <input type="text" name="stock_sym" value="" placeholder="select stock symbol" />
-    <input type="submit" value="Continue" />
-  </form>
-  """
-  @info @log_fmt "servnig NO specifing version", payload=postpayload
-  html(form)
+
+"""Initial page for setting which stocks to monitor"""
+function inital_stock()
+  @debug "lodaing inital stock form"
+  state=Dict(:sym_list => [], ) #:interval => interval_set, :begin => begin_date)
+  html(:finc, :new_stock_form, sym_csv="")
 end
+
 
 
 """

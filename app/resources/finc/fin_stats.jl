@@ -62,19 +62,18 @@ function get_stats(sym::String; interval::String="1d", period::String="1mo", sta
   # ======================================
   df[!, :Date] = collect(rownames) # Add the rownames - Dates
   # Clean all PyObject (numpy) to primitive julia
-  println("change dividens Type")
+  @debug "change dividens Type"
   try
     new_dividends = [d.tolist() for d in df[!, :Dividends]]
     df[!, :Dividends] = new_dividends
   catch
-    @debug "dividends are not in numpy format"
-    println("dividends in julia format")
+    @debug "dividends are in numpy format"
   end
-  println("change Volume type")
+  @debug "change Volume type"
   df[!, :Volume] = [d.tolist() for d in df[!, :Volume]]
-  println("removing 'stock splits'")
+  @debug "removing 'stock splits'"
   try
-    delete!(df, :Symbol("Stock Splits"))  # Remoce unknow column
+    delete!(df, Symbol("Stock Splits"))  # Remoce unknow column
   catch
   end
   df
@@ -85,13 +84,13 @@ gets stats of multiple stocks by list of stock symbols
 Returns a dict {"sym" -> DataFrame}
 """
 function get_stats(sym::Array; interval::String="1d", period::String="1mo", start::Union{String,Nothing}=nothing)
-  @info "get stats called for $sym array"
+  @debug "get stats called for $sym array"
   dfs = Dict()
   for s in sym
-    df = get_stats(s)
+    df = get_stats(s, interval=interval, period=period, start=start)
     dfs[s] = df
   end
-  @info "got all data for $sym"
+  @debug "got all data for $sym"
   return dfs
 end
 
@@ -112,7 +111,10 @@ function plot_stocks(dfs)
   pl = plot()
   for (sym,df) in dfs
     my_dates = [DateTime(d) for d in df[!, :Date]]
-    @info "plotting for $sym from $(df[begin, :Date]) to $(df[end, :Date])"
+    if sym !== ""
+      #@info "plotting for $sym from $(df[begin, :Date]) to $(df[end, :Date])"
+      @info "plotting for $sym from $(my_dates[begin]) to $(my_dates[end])"
+    end
     plot!(my_dates ,dfs[sym][!, :Close], label=sym)
   end
   plot!()  # Retuns the plots object

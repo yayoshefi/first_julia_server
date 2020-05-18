@@ -12,8 +12,11 @@ function initialize_logging()
                 Logging.ConsoleLogger(stdout, Genie.config.log_level)
               )
             else
-              Logging.ConsoleLogger(stdout, Genie.config.log_level)
+              #Logging.ConsoleLogger(stdout, Genie.config.log_level)
+              Logging.SimpleLogger(stdout, Logging.Debug)
+
             end
+
 
   timestamp_logger(logger) = LoggingExtras.TransformerLogger(logger) do log
     merge(log, (; message = "$(Dates.format(Dates.now(), date_format)) $(log.message)"))

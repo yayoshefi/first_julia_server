@@ -29,12 +29,15 @@ route("/dev1", yair_devController.out_form, method=POST)
 # END OF Development section
 # ==============================
 
-route("/test_select_stock", FincController.choose_stock_form)  #This serves the form to choose symbol
-route("/test_new_stock", FincController.show_single_stock, method=POST)  #This serves POSTED version of the stock
+route("/test_new_finance", FincController.test_new_finance, method=POST)
+route("/test_inital_stock", FincController.inital_stock)
+
 
 
 #=
 NOTE:  some usfull functions:
 Router.named_routes() - shown each function to what route
 Router.routes() - each of the specified routes
+# To reload all sub-Modules
+Revise.revise(MyTestFin)
 =#

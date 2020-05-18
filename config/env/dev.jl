@@ -9,3 +9,4 @@ const config = Settings(
 )
 
 ENV["JULIA_REVISE"] = "auto"
+println("Development evnviorment config was created!")
